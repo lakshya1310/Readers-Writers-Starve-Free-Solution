@@ -1,0 +1,31 @@
+// Shared variables
+count = 0     // Number of readers currently reading
+mutex = 1     // Mutex semaphore to protect count
+roomEmpty = 1 // Semaphore to indicate if the writing room is empty
+turnstile = 1 // Semaphore to implement turnstile
+
+// Reader process
+do {
+    wait(turnstile)           // Wait to enter turnstile
+    wait(mutex)               // Acquire mutex to update count
+    count = count + 1         // Increment reader count
+    if count == 1:            // If first reader, wait for room to be empty
+        wait(roomEmpty)
+    signal(mutex)             // Release mutex
+    signal(turnstile)         // Exit turnstile
+    // Read data
+    wait(mutex)               // Acquire mutex to update count
+    count = count - 1         // Decrement reader count
+    if count == 0:            // If last reader, signal room is empty
+        signal(roomEmpty)
+    signal(mutex)             // Release mutex
+} while true
+
+// Writer process
+do {
+    wait(turnstile)           // Wait to enter turnstile
+    wait(roomEmpty)           // Wait for room to be empty
+    signal(turnstile)         // Exit turnstile
+    // Write data
+    signal(roomEmpty)         // Signal room is empty
+} while true
